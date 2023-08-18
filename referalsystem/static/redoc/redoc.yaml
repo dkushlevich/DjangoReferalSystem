@@ -1,0 +1,400 @@
+openapi: 3.0.2
+info:
+  title: 'ReferalSystem API'
+  version: ''
+  description: |
+    запросы к API начинаются с `/api/v1/`
+
+    # Алгоритм регистрации пользователей
+    1. Пользователь отправляет POST-запрос на добавление нового пользователя с параметром `phone_number` на эндпоинт `/api/v1/auth/signup/`.
+    2. Пользователь получает код подтверждения (`confirmation_code`) по SMS.
+    3. Пользователь отправляет POST-запрос с параметрами `phone_number` и `confirmation_code` на эндпоинт `/api/v1/auth/login/`, в ответе на запрос ему приходит `token` (JWT-токен).
+    4. При желании пользователь отправляет PATCH-запрос на эндпоинт `/api/v1/users/me/` и заполняет поля в своём профайле (описание полей — в документации).
+    # Пользовательские роли
+    - **Аноним** — доступны эндпоинты регистрации и получения токена.
+    - **Аутентифицированный пользователь**  — доступны эндпоинты users/me и users/activate_invite_code, с помощью которых пользователь может получать и редактировать информацию о себе и активировать инвайт код от других пользователей соответственно.
+    - **Администратор** — обладает доступом в админ-панель, дополнительно к аутентифицированному пользователю доступны эндпоинты users/ и users/{phone_number} (GET, DELETE).
+servers:
+  - url: /api/v1/
+
+tags:
+  - name: AUTH
+    description: Регистрация пользователей и выдача токенов
+  - name: USERS
+    description: Пользователи
+
+paths:
+  /auth/signup/:
+    post:
+      tags:
+        - AUTH
+      operationId: Регистрация нового пользователя
+      description: |
+        Получить код подтверждения на переданный `phone_number`.
+        Права доступа: **Доступно без токена.**
+        Поле `phone_number` должно быть уникальным.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - phone_number
+              properties:
+                phone_number:
+                  type: string
+                  format: phone_number
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                properties:
+                  phone_number:
+                    type: string
+                    format: phone_number
+          description: 'Удачное выполнение запроса'
+
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: 'Отсутствует обязательное поле или оно некорректно'
+
+  /auth/login/:
+    post:
+      tags:
+        - AUTH
+      operationId: Получение JWT-токена
+      description: |
+        Получение JWT-токена в обмен на phone_number и confirmation code.
+        Права доступа: **Доступно без токена.**
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - phone_number
+                - confirmation_code
+              properties:
+                phone_number:
+                  type: string
+                  format: phone_number
+                confirmation_code:
+                  type: string
+                  writeOnly: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+          description: 'Удачное выполнение запроса'
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: 'Отсутствует обязательное поле или оно некорректно'
+        404:
+          description: Пользователь не найден
+
+  /users/:
+    get:
+      tags:
+        - USERS
+      operationId: Получение списка всех пользователей
+      description: |
+        Получить список всех пользователей.
+        Права доступа: **Суперпользователь**.
+  
+      responses:
+        200:
+          description: Удачное выполнение запроса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                  previous:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        401:
+          description: Необходим JWT-токен
+      security:
+      - jwt-token:
+        - read:admin
+
+  /users/{phone_number}/:
+    parameters:
+      - name: phone_number
+        in: path
+        required: true
+        description: phone_number пользователя
+        schema:
+          type: string
+          format: phone_number
+    get:
+      tags:
+        - USERS
+      operationId: Получение пользователя по phone_number
+      description: |
+        Получить пользователя по username.
+        Права доступа: **Суперпользователь**.
+      responses:
+        200:
+          description: Удачное выполнение запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Необходим JWT-токен
+        403:
+          description: Нет прав доступа
+        404:
+          description: Пользователь не найден
+      security:
+      - jwt-token:
+        - read:admin
+    delete:
+      tags:
+        - USERS
+      operationId: Удаление пользователя по phone_number
+      description: |
+        Удалить пользователя по phone_number.
+        Права доступа: **Суперпользователь.**
+      responses:
+        204:
+          description: Удачное выполнение запроса
+        401:
+          description: Необходим JWT-токен
+        403:
+          description: Нет прав доступа
+        404:
+          description: Пользователь не найден
+      security:
+        - jwt-token:
+        - write: admin, user
+
+  /users/me/:
+    get:
+      tags:
+        - USERS
+      operationId: Получение данных своей учетной записи
+      description: |
+        Получить данные своей учетной записи
+        Права доступа: **Любой авторизованный пользователь**
+      responses:
+        200:
+          description: Удачное выполнение запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        401:
+          description: Необходим JWT-токен
+        403:
+          description: Нет прав доступа
+      security:
+        - jwt-token:
+        - read: admin, user
+    patch:
+      tags:
+        - USERS
+      operationId: Изменение данных своей учетной записи
+      description: |
+        Изменить данные своей учетной записи
+        Права доступа: **Любой авторизованный пользователь**
+        Поля `phone_number`, `username` и `email` должны быть уникальными.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MePatch'
+      responses:
+        200:
+          description: Удачное выполнение запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: 'Отсутствует обязательное поле или оно некорректно'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+      security:
+      - jwt-token:
+        - write: admin, user
+
+  /users/activate_invite_code/:
+    post:
+      tags:
+        - USERS
+      operationId: Активация инвайт-кода
+      description: |
+        Активировать `invite_code`.
+        Права доступа: **Авторизованный пользователь**.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - invite_code
+              properties:
+                invite_code:
+                  type: string
+                  pattern: ^[a-zA-Z0-9]{6}$
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                properties:
+                  invite_code:
+                    type: string
+                    pattern: ^[a-zA-Z0-9]{6}$
+          description: 'Удачное выполнение запроса'
+
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+          description: 'Отсутствует обязательное поле или оно некорректно'
+      security:  
+        - jwt-token:
+          - write: admin, user
+
+
+components:
+  schemas:
+
+    User:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          format: phone_number
+        username:
+          type: string
+          nullable: true
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        invite_code:
+          type: string
+          readOnly: true
+        invited_by_code:
+          type: string
+          readOnly: true
+        invitings:
+          type: array
+          items:
+            type: string
+      required:
+      - phone_number
+
+
+    ValidationError:
+      title: Ошибка валидации
+      type: object
+      properties:
+        field_name:
+          type: array
+          items:
+            type: string
+
+    Token:
+      title: Токен
+      type: object
+      properties:
+        token:
+          type: string
+          title: access токен
+
+    Me:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          format: phone_number
+        username:
+          type: string
+          nullable: true
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        invite_code:
+          type: string
+          readOnly: true
+        invited_by_code:
+          type: string
+          readOnly: true
+        invitings:
+          type: array
+          items:
+            type: string
+      required:
+      - phone_number
+
+    MePatch:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          format: phone_number
+        username:
+          type: string
+          nullable: true
+          pattern: ^[\w.@+-]+\z
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+      required:
+      - phone_number
+
+
+  securitySchemes:
+    jwt-token:
+      type: apiKey
+      description: Используется аутентификация с использованием JWT-токенов
+      name: Bearer
+      in: header
