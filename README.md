@@ -1,6 +1,6 @@
 <div align=center>
   
-  # DjangoReferalSystem <br> (Реализация тестового задания) <br> [Деплой](https://referalsystem.ddns.net)
+  # DjangoReferalSystem <br> (Реализация тестового задания) <br> [Деплой](https://referalsystem.ddns.net/redoc/)
   
   [![ReferalSystem_CI/CD](https://github.com/dkushlevich/DjangoReferalSystem/workflows/ReferalSystem_CI/CD/badge.svg)](https://github.com/dkushlevich/DjangoReferalSystem/workflows/ReferalSystem_CI/CD/badge.svg)
   
