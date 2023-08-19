@@ -4,8 +4,7 @@ from users.models import User
 
 
 class UserAdmin(admin.ModelAdmin):
-    """Настройки отображения пользователей в Админ-панеле"""
-    list_display = ("username", "phone_number")
+    list_display = ("phone_number",)
     fields = (
         "username", "first_name",
         "last_name", "phone_number",

@@ -132,6 +132,26 @@ python-jose = ["python-jose (==3.0.0)"]
 test = ["cryptography", "pytest", "pytest-cov", "pytest-django", "pytest-xdist", "tox"]
 
 [[package]]
+name = "gunicorn"
+version = "21.2.0"
+description = "WSGI HTTP Server for UNIX"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "gunicorn-21.2.0-py3-none-any.whl", hash = "sha256:3213aa5e8c24949e792bcacfc176fef362e7aac80b76c56f6b5122bf350722f0"},
+    {file = "gunicorn-21.2.0.tar.gz", hash = "sha256:88ec8bff1d634f98e61b9f65bc4bf3cd918a90806c6f5c48bc5603849ec81033"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[package.extras]
+eventlet = ["eventlet (>=0.24.1)"]
+gevent = ["gevent (>=1.4.0)"]
+setproctitle = ["setproctitle"]
+tornado = ["tornado (>=0.2)"]
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 description = "brain-dead simple config-ini parsing"
@@ -482,4 +502,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "659898bd4525d1244b2a1497a58833a9ca6adead0b37aef4cb10ddb845241d0c"
+content-hash = "fadfca0740e7845e4609c37941c5ac8749a69262317508503283a174befcf1d3"

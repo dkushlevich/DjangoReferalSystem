@@ -9,7 +9,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class User(AbstractUser):
-    """Кастомная модель пользователя"""
+    REQUIRED_FIELDS = ("phone_number",)
 
     phone_number = PhoneNumberField(
         verbose_name="Номер телефона",
@@ -30,20 +30,17 @@ class User(AbstractUser):
         ("Ник пользователя"),
         max_length=150,
         blank=True,
-        null=True,
         validators=[UnicodeUsernameValidator()],
         unique=True,
     )
     confirmation_code = models.CharField(
         verbose_name="Код авторизации",
         blank=True,
-        null=True,
         max_length=settings.CONFIRMATION_CODE_LENGTH,
     )
     invite_code = models.CharField(
         verbose_name="Инвайт-код",
         blank=True,
-        null=True,
         max_length=settings.INVITE_CODE_LENGTH,
         editable=False,
     )

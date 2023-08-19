@@ -1,0 +1,30 @@
+version: '3'
+
+volumes:
+  pg_data:
+  static:
+
+services:
+
+  db:
+    image: postgres:13.10
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    image: dkushlevich/referalsystem_backend
+    env_file: .env
+    volumes:
+      - static:/static
+    depends_on:
+      - db
+
+  gateway:
+    image: dkushlevich/referalsystem_gateway
+    volumes:
+      - static:/static/
+    ports:
+      - 8000:80
+    depends_on:
+      - db

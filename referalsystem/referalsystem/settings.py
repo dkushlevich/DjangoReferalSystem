@@ -115,7 +115,7 @@ USE_TZ = True
 
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -158,6 +158,7 @@ MAX_LENGTH_LAST_NAME = 150
 
 CONFIRMATION_CODE_CHARS = digits
 CONFIRMATION_CODE_LENGTH = 4
+CONFIRMATION_CODE_PLUG = None
 
 # Invite code config
 
@@ -167,4 +168,4 @@ INVITE_CODE_LENGTH = 6
 # Phone numer config
 
 PHONE_NUMBER_REGION = "RU"
-INTRUDER_STOPPER = "STOP"
+

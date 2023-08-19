@@ -8,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from users.models import User
 
 from api.serializers import (
     InviteCodeSerializer,
@@ -16,6 +15,7 @@ from api.serializers import (
     TokenCreateSerializer,
     UserSerializer,
 )
+from users.models import User
 
 
 class SignUpView(views.APIView):
@@ -50,7 +50,7 @@ class TokenView(views.APIView):
         user = get_object_or_404(User, phone_number=phone_number)
 
         if (
-            user.confirmation_code == settings.INTRUDER_STOPPER
+            user.confirmation_code == settings.CONFIRMATION_CODE_PLUG
         ):
             return Response(
                 {"message": "Код подтверждения недействителен"},
@@ -58,14 +58,14 @@ class TokenView(views.APIView):
             )
 
         if (user.confirmation_code != confirmation_code):
-            user.confirmation_code = settings.INTRUDER_STOPPER
+            user.confirmation_code = settings.CONFIRMATION_CODE_PLUG
             user.save(update_fields=["confirmation_code"])
             return Response(
                 {"message": "Неверный код подтверждения"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user.confirmation_code = settings.INTRUDER_STOPPER
+        user.confirmation_code = settings.CONFIRMATION_CODE_PLUG
         user.save(update_fields=["confirmation_code"])
         token = AccessToken.for_user(user)
         return Response({"Bearer": f"{token}"})
