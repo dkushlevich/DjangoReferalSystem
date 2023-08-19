@@ -113,4 +113,4 @@ jobs:
           sudo docker compose up -d
           sudo docker compose exec backend python manage.py migrate
           echo 'yes' | sudo docker compose exec backend python manage.py collectstatic
-          sudo docker compose cp -r /app/static/. /static/
+          sudo docker compose exec backend cp -r /app/static/. /static/
